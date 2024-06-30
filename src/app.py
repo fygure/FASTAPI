@@ -1,45 +1,67 @@
-import os
-from typing import Union
+import asyncio
+from contextlib import asynccontextmanager
 #import uvicorn
-from dotenv import load_dotenv
 from fastapi import FastAPI
+from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
-from opentelemetry import trace
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.exporter.jaeger.thrift import JaegerExporter
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from typing import Union
+from dotenv import load_dotenv
+import src
+from src import APP_ENV
+from src import telemetry
+from src.logger import logger
+from src.log_middleware import log_middleware
 
 #Load .env vars
 load_dotenv()
 
-#Init FastAPI app
-app = FastAPI()
+# Startup event
+async def startup(app: FastAPI):
+    logger.info(f"Starting up... {APP_ENV}")
 
+#Shutdown event
+async def shutdown(app: FastAPI):
+    logger.info("Shutting down...")
+    close_jobs = []
+    telemetry.dismount_telemetry(app)
+    await asyncio.gather(*close_jobs)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await startup(app)
+    yield
+    await shutdown(app)
+
+#Init FastAPI app
+app = FastAPI(
+    title=src.PACKAGE_NAME,
+    version=src.__version__,
+    contact={src.__author__: src.__author_email__},
+    description=src.__description__,
+    lifespan=lifespan,
+    debug=APP_ENV != "prod"
+)
+
+#Add middlewares
+#TODO: add CORSMiddleware, GZipMiddleware, ...
+"""
+This is a way you can extract your middleware into its own 
+module (file) and register that middleware to the app object
+"""
+app.add_middleware(BaseHTTPMiddleware, dispatch=log_middleware)
+
+# Instrument FastAPI app with OpenTelemetry
+telemetry.mount_telemetry(app)
+
+logger.info('Starting API...')
+
+################################################################################
 #Pydantic
 class Item(BaseModel):
     name: str
     price: float
     is_offer: Union[bool, None] = None
-
-
-###########################################################################
-# Manual OpenTelemetry Instrumentation for FastAPI
-# Set up Tracer
-trace.set_tracer_provider(TracerProvider())
-otlp_exporter = OTLPSpanExporter(
-    endpoint=os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
-)
-span_processor = BatchSpanProcessor(otlp_exporter)
-trace.get_tracer_provider().add_span_processor(span_processor)
-
-# Auto-instrument FastAPI app
-FastAPIInstrumentor.instrument_app(app)
-
-# Define a global tracer object for custom spans
-TRACER = trace.get_tracer(__name__)
-###########################################################################
+################################################################################
 #Routes
 @app.get("/")
 async def read_root():
@@ -47,6 +69,9 @@ async def read_root():
 
 @app.post("/send")
 async def send_things(my_object: Item):
+    #add artifical post time to show logging process time delta
+    await asyncio.sleep(1.5)
+    
     return {
         "status": "ok",
         "received_object": my_object
@@ -59,6 +84,7 @@ async def read_item(item_id: int, q: Union[str, None] = None):
 @app.put("/items/{item_id}")
 def update_item(item_id: int, item: Item):
     return {"item_name": item.name, "item_id": item_id}
+################################################################################
 
 # #Main program to run app (Commented because Dockerfile contains commands to run)
 # def main():
