@@ -13,6 +13,18 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 ###########################################################################
 # Manual OpenTelemetry Instrumentation for FastAPI
 
+#TODO
+"""_Create Package_
+Configurations to ingest from api owners:
+    -Exporter endpoints for Tracer, Log, Metrics
+    -Logger object needed in this package to mount the OTLP log exporter
+    -List of instruments outside of bootstrap (feedback loop)
+    -Service to the bootstrappable instruments only for now
+    -Service to the automatic instrumentation for now
+    -Manual instrumentation will require work within the code
+    -Perhaps create decorators for api routes that can inject manual tracing/spans?
+"""
+
 #V1 (WORKS)
 #Set up OTLP Tracer
 # trace.set_tracer_provider(TracerProvider())
