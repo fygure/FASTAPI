@@ -21,5 +21,5 @@
 - [FastAPI](https://fastapi.tiangolo.com/)
 - [Pydantic](https://docs.pydantic.dev/latest/)
 - [Uvicorn](https://www.uvicorn.org/)
-- [Jaeger](https://www.jaegertracing.io/)
+- [Aspecto](https://www.aspecto.io/)
 - [OpenTelemetry](https://opentelemetry.io/docs/languages/python/getting-started/)
