@@ -3,6 +3,7 @@ from logger import logger
 from fastapi import FastAPI
 from opentelemetry import trace, _logs
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from opentelemetry.sdk.trace import TracerProvider, ConcurrentMultiSpanProcessor
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
@@ -43,6 +44,9 @@ span_processor = BatchSpanProcessor(otlp_exporter)
 trace_provider.add_span_processor(span_processor)
 trace.set_tracer_provider(trace_provider)
 
+# Define a global tracer object for custom spans
+TRACER = trace.get_tracer(__name__)
+
 #TODO Set up OTLP Metrics
 
 # Set up OTLP Logging
@@ -56,9 +60,10 @@ logger_provider.add_log_record_processor(log_processor)
 _logs.set_logger_provider(logger_provider)
 otel_logging_handler = LoggingHandler(logger_provider=logger_provider)
 
+#Custom Instruments: must create an instance before calling instrument()
+httpx_instrumentor = HTTPXClientInstrumentor()
+httpx_instrumentor.instrument()
 
-# Define a global tracer object for custom spans
-TRACER = trace.get_tracer(__name__)
 ###########################################################################
 # To be used in entry point (app.py)
 def mount_telemetry(app: FastAPI):
@@ -66,6 +71,7 @@ def mount_telemetry(app: FastAPI):
     FastAPIInstrumentor.instrument_app(
         app=app,
         tracer_provider=trace_provider
+        #meter_provider=
     )
 
 def dismount_telemetry():

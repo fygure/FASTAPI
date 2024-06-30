@@ -1,7 +1,7 @@
 import asyncio
 from contextlib import asynccontextmanager
 #import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
 from typing import Union
@@ -11,6 +11,7 @@ from src import APP_ENV
 from src import telemetry
 from src.logger import logger
 from src.log_middleware import log_middleware
+import httpx
 
 #Load .env vars
 load_dotenv()
@@ -67,6 +68,23 @@ class Item(BaseModel):
 async def read_root():
     return {"Hello": "World"}
 
+@app.get("/ping")
+async def ping():
+    return {"response": "pong"}
+
+# Nested GET request route
+@app.get("/nested-request")
+async def nested_request():
+    async with httpx.AsyncClient() as client:
+        try:
+            await asyncio.sleep(3)
+            response = await client.get("http://localhost:8000/ping")
+            if response.status_code != 200:
+                raise HTTPException(status_code=response.status_code, detail="Failed to fetch /ping")
+            return {"nested_response": response.json()}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/send")
 async def send_things(my_object: Item):
     #add artifical post time to show logging process time delta
@@ -77,13 +95,13 @@ async def send_things(my_object: Item):
         "received_object": my_object
     }
 
-@app.get("/items/{item_id}")
-async def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+# @app.get("/items/{item_id}")
+# async def read_item(item_id: int, q: Union[str, None] = None):
+#     return {"item_id": item_id, "q": q}
 
-@app.put("/items/{item_id}")
-def update_item(item_id: int, item: Item):
-    return {"item_name": item.name, "item_id": item_id}
+# @app.put("/items/{item_id}")
+# def update_item(item_id: int, item: Item):
+#     return {"item_name": item.name, "item_id": item_id}
 ################################################################################
 
 # #Main program to run app (Commented because Dockerfile contains commands to run)
