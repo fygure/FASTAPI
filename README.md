@@ -6,6 +6,7 @@
 - `docker-compose build` to build the Docker images (only needed if there are changes to Dockerfile or dependencies)
 - `docker-compose up` to start the application
 - `docker-compose down` to stop running containers (Run this first when developing)
+- `docker logs fastapi-otel-collector-1` will show the traces logged from the collector
 
 ### Virtual Environment Scripts
 - `python -m venv venv` to create a venv
