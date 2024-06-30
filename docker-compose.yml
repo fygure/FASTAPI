@@ -19,7 +19,14 @@ services:
       otel-collector:
         condition: service_started
     environment:
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
-      - OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=http://otel-collector:4318/v1/logs
-      - OTEL_SERVICE_NAME=fastapi-service
-      - PYTHONPATH=/app/src
+      - FOO
+      - APP_ENV
+      - IS_LOCAL
+      - OTEL_EXPORTER_OTLP_ENDPOINT
+      - OTEL_EXPORTER_OTLP_LOGS_ENDPOINT
+      - OTEL_EXPORTER_OTLP_METRICS_ENDPOINT
+      - OTEL_SERVICE_NAME
+      - OTEL_TRACES_EXPORTER
+      - OTEL_METRICS_EXPORTER
+      - OTEL_LOGS_EXPORTER
+      - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED
