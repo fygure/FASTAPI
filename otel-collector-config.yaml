@@ -8,18 +8,27 @@ processors:
   batch:
     timeout: 5s
     send_batch_size: 512
+  resource:
+    attributes:
+      - key: service.name
+        value: fastapi-service
+        action: insert
 
 exporters:
   logging/traces: {}
   logging/logs: {}
+  otlp/aspecto:
+      endpoint: otelcol.aspecto.io:4317
+      headers:
+        Authorization: 0eace6c8-19dd-4ef1-95cb-9244d3be3256
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [batch]
-      exporters: [logging/traces]
+      processors: [batch, resource]
+      exporters: [logging/traces, otlp/aspecto]
     logs:
       receivers: [otlp]
-      processors: [batch]
+      processors: [batch, resource]
       exporters: [logging/logs]
