@@ -15,20 +15,28 @@ processors:
         action: insert
 
 exporters:
-  logging/traces: {}
-  logging/logs: {}
+  debug/traces:
+    verbosity: detailed
+  debug/logs:
+    verbosity: detailed
+  debug/metrics:
+    verbosity: detailed
   otlp/aspecto:
-      endpoint: otelcol.aspecto.io:4317
-      headers:
-        Authorization: 0eace6c8-19dd-4ef1-95cb-9244d3be3256
+    endpoint: otelcol.aspecto.io:4317
+    headers:
+      Authorization: 0eace6c8-19dd-4ef1-95cb-9244d3be3256
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
       processors: [batch, resource]
-      exporters: [logging/traces, otlp/aspecto]
+      exporters: [debug/traces, otlp/aspecto]
     logs:
       receivers: [otlp]
       processors: [batch, resource]
-      exporters: [logging/logs]
+      exporters: [debug/logs]
+    metrics:
+      receivers: [otlp]
+      processors: [batch, resource]
+      exporters: [debug/metrics]

@@ -64,6 +64,7 @@ class Item(BaseModel):
     is_offer: Union[bool, None] = None
 ################################################################################
 #Routes
+#TODO: add OTLP manual metric instrumentation
 @app.get("/")
 async def read_root():
     return {"Hello": "World"}
@@ -95,13 +96,6 @@ async def send_things(my_object: Item):
         "received_object": my_object
     }
 
-# @app.get("/items/{item_id}")
-# async def read_item(item_id: int, q: Union[str, None] = None):
-#     return {"item_id": item_id, "q": q}
-
-# @app.put("/items/{item_id}")
-# def update_item(item_id: int, item: Item):
-#     return {"item_name": item.name, "item_id": item_id}
 ################################################################################
 
 # #Main program to run app (Commented because Dockerfile contains commands to run)
